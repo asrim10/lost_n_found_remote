@@ -4,6 +4,7 @@ import 'package:lost_n_found/core/api/api_endpoints.dart';
 import 'package:lost_n_found/core/services/storage/user_session_service.dart';
 import 'package:lost_n_found/features/auth/data/datasources/auth_datasource.dart';
 import 'package:lost_n_found/features/auth/data/models/auth_api_model.dart';
+import 'package:lost_n_found/features/auth/data/models/auth_hive_model.dart';
 
 //Provider
 final authRemoteDatasourceProvider = Provider<AuthRemoteDatasource>((ref) {
@@ -29,9 +30,26 @@ class AuthRemoteDatasource implements IAuthRemoteDataSource {
   }
 
   @override
-  Future<AuthApiModel?> login(String email, String password) {
-    // TODO: implement login
-    throw UnimplementedError();
+  Future<AuthApiModel?> login(String email, String password) async {
+    final response = await _apiClient.post(
+      ApiEndpoints.studentLogin,
+      data: {'email': email, 'password': password},
+    );
+
+    if (response.data['success'] == true) {
+      final data = response.data['data'] as Map<String, dynamic>;
+      final user = AuthApiModel.fromJson(data);
+
+      //Save user session
+      await _userSessionService.saveUserSession(
+        userId: user.id!,
+        email: user.email,
+        fullName: user.fullName,
+        username: user.username,
+      );
+      return user;
+    }
+    return null;
   }
 
   @override
