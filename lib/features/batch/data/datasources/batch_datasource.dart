@@ -14,5 +14,4 @@ abstract interface class IBatchRemoteDatasource {
   Future<BatchApiModel?> getBatchById(String batchId);
   Future<bool> createBatch(BatchApiModel batch);
   Future<bool> updateBatch(BatchApiModel batch);
-  Future<bool> deleteBatch(String batchId);
 }
