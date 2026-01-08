@@ -86,6 +86,8 @@ class BatchRepository implements IBatchRepository {
             message: e.response?.data['message'] ?? 'Failed to fetch batches',
           ),
         );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
       }
     } else {
       try {
