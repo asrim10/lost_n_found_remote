@@ -18,19 +18,17 @@ void main() async {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
-
-  // initialize Hive or other services if needed
   await HiveService().init();
 
-  // Initialize SharedPreferences : because this is async operation
-  // but riverpod providers are sync so we need to initialize it here
-  final sharedPreferences = await SharedPreferences.getInstance();
+  //Shared Preferences ko object
+  //shared pref = async
+  // provider = sync
+
+  final sharedPrefs = await SharedPreferences.getInstance();
 
   runApp(
     ProviderScope(
-      overrides: [
-        sharedPreferencesProvider.overrideWithValue(sharedPreferences),
-      ],
+      overrides: [sharedPreferencesProvider.overrideWithValue(sharedPrefs)],
       child: const MyApp(),
     ),
   );
