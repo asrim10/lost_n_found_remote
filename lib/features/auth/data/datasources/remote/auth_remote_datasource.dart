@@ -4,7 +4,6 @@ import 'package:lost_n_found/core/api/api_endpoints.dart';
 import 'package:lost_n_found/core/services/storage/user_session_service.dart';
 import 'package:lost_n_found/features/auth/data/datasources/auth_datasource.dart';
 import 'package:lost_n_found/features/auth/data/models/auth_api_model.dart';
-import 'package:lost_n_found/features/auth/data/models/auth_hive_model.dart';
 
 //Provider
 final authRemoteDatasourceProvider = Provider<AuthRemoteDatasource>((ref) {
