@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -195,17 +197,26 @@ class _ReportItemPageState extends ConsumerState<ReportItemPage> {
               ListTile(
                 leading: Icon(Icons.camera),
                 title: Text("Open Camera"),
-                onTap: _pickFromCamera,
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickFromCamera();
+                },
               ),
               ListTile(
                 leading: Icon(Icons.image),
                 title: Text("Open Gallery"),
-                onTap: _pickFromGallery,
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickFromGallery();
+                },
               ),
               ListTile(
                 leading: Icon(Icons.video_call),
                 title: Text("Record Video"),
-                onTap: _pickVideo,
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickVideo();
+                },
               ),
             ],
           ),
@@ -453,6 +464,47 @@ class _ReportItemPageState extends ConsumerState<ReportItemPage> {
                               ),
                             ),
                           ),
+                          if (_selectedMedia.isNotEmpty) ...[
+                            Stack(
+                              children: [
+                                Container(
+                                  width: 150,
+                                  height: 150,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    image: DecorationImage(
+                                      image: FileImage(
+                                        File(_selectedMedia.first.path),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 4,
+                                  right: 4,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedMedia.clear();
+                                      });
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      padding: EdgeInsets.all(5),
+                                      child: Icon(
+                                        Icons.close,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
 
