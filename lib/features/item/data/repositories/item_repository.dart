@@ -1,28 +1,46 @@
+import 'dart:io';
+
 import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lost_n_found/core/error/failures.dart';
+import 'package:lost_n_found/core/services/connectivity/network_info.dart';
 import 'package:lost_n_found/features/item/data/datasources/item_datasource.dart';
 import 'package:lost_n_found/features/item/data/datasources/local/item_local_datasource.dart';
+import 'package:lost_n_found/features/item/data/datasources/remote/item_remote_datasource.dart';
 import 'package:lost_n_found/features/item/data/models/item_hive_model.dart';
 import 'package:lost_n_found/features/item/domain/entities/item_entity.dart';
 import 'package:lost_n_found/features/item/domain/repositories/item_repository.dart';
 
 final itemRepositoryProvider = Provider<IItemRepository>((ref) {
-  final itemDatasource = ref.read(itemLocalDatasourceProvider);
-  return ItemRepository(itemDatasource: itemDatasource);
+  final itemLocalDatasource = ref.read(itemLocalDatasourceProvider);
+  final itemRemoteDatasource = ref.read(itemRemoteDatasourceProvider);
+  final networkInfo = ref.read(networkInfoProvider);
+
+  return ItemRepository(
+    itemLocalDatasource: itemLocalDatasource,
+    itemRemoteDatasource: itemRemoteDatasource,
+    networkInfo: networkInfo,
+  );
 });
 
 class ItemRepository implements IItemRepository {
-  final IItemLocalDataSource _itemDataSource;
+  final IItemLocalDataSource _itemLocalDataSource;
+  final NetworkInfo _networkInfo;
+  final IItemRemoteDatasource _itemRemoteDatasource;
 
-  ItemRepository({required IItemLocalDataSource itemDatasource})
-    : _itemDataSource = itemDatasource;
+  ItemRepository({
+    required IItemLocalDataSource itemLocalDatasource,
+    required IItemRemoteDatasource itemRemoteDatasource,
+    required NetworkInfo networkInfo,
+  }) : _itemLocalDataSource = itemLocalDatasource,
+       _networkInfo = networkInfo,
+       _itemRemoteDatasource = itemRemoteDatasource;
 
   @override
   Future<Either<Failure, bool>> createItem(ItemEntity item) async {
     try {
       final itemModel = ItemHiveModel.fromEntity(item);
-      final result = await _itemDataSource.createItem(itemModel);
+      final result = await _itemLocalDataSource.createItem(itemModel);
       if (result) {
         return const Right(true);
       }
@@ -35,7 +53,7 @@ class ItemRepository implements IItemRepository {
   @override
   Future<Either<Failure, bool>> deleteItem(String itemId) async {
     try {
-      final result = await _itemDataSource.deleteItem(itemId);
+      final result = await _itemLocalDataSource.deleteItem(itemId);
       if (result) {
         return const Right(true);
       }
@@ -48,7 +66,7 @@ class ItemRepository implements IItemRepository {
   @override
   Future<Either<Failure, List<ItemEntity>>> getAllItems() async {
     try {
-      final models = await _itemDataSource.getAllItems();
+      final models = await _itemLocalDataSource.getAllItems();
       final entities = ItemHiveModel.toEntityList(models);
       return Right(entities);
     } catch (e) {
@@ -59,7 +77,7 @@ class ItemRepository implements IItemRepository {
   @override
   Future<Either<Failure, ItemEntity>> getItemById(String itemId) async {
     try {
-      final model = await _itemDataSource.getItemById(itemId);
+      final model = await _itemLocalDataSource.getItemById(itemId);
       if (model != null) {
         final entity = model.toEntity();
         return Right(entity);
@@ -75,7 +93,7 @@ class ItemRepository implements IItemRepository {
     String userId,
   ) async {
     try {
-      final models = await _itemDataSource.getItemsByUser(userId);
+      final models = await _itemLocalDataSource.getItemsByUser(userId);
       final entities = ItemHiveModel.toEntityList(models);
       return Right(entities);
     } catch (e) {
@@ -86,7 +104,7 @@ class ItemRepository implements IItemRepository {
   @override
   Future<Either<Failure, List<ItemEntity>>> getLostItems() async {
     try {
-      final models = await _itemDataSource.getLostItems();
+      final models = await _itemLocalDataSource.getLostItems();
       final entities = ItemHiveModel.toEntityList(models);
       return Right(entities);
     } catch (e) {
@@ -97,7 +115,7 @@ class ItemRepository implements IItemRepository {
   @override
   Future<Either<Failure, List<ItemEntity>>> getFoundItems() async {
     try {
-      final models = await _itemDataSource.getFoundItems();
+      final models = await _itemLocalDataSource.getFoundItems();
       final entities = ItemHiveModel.toEntityList(models);
       return Right(entities);
     } catch (e) {
@@ -110,7 +128,7 @@ class ItemRepository implements IItemRepository {
     String categoryId,
   ) async {
     try {
-      final models = await _itemDataSource.getItemsByCategory(categoryId);
+      final models = await _itemLocalDataSource.getItemsByCategory(categoryId);
       final entities = ItemHiveModel.toEntityList(models);
       return Right(entities);
     } catch (e) {
@@ -122,13 +140,42 @@ class ItemRepository implements IItemRepository {
   Future<Either<Failure, bool>> updateItem(ItemEntity item) async {
     try {
       final itemModel = ItemHiveModel.fromEntity(item);
-      final result = await _itemDataSource.updateItem(itemModel);
+      final result = await _itemLocalDataSource.updateItem(itemModel);
       if (result) {
         return const Right(true);
       }
       return const Left(LocalDatabaseFailure(message: "Failed to update item"));
     } catch (e) {
       return Left(LocalDatabaseFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> uploadImage(File image) async {
+    // remote ma matrw insert hunu paryo
+    if (await _networkInfo.isConnected) {
+      try {
+        final fileName = await _itemRemoteDatasource.uploadImage(image);
+        return Right(fileName);
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return Left(ApiFailure(message: "No internet Connection"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> uploadVideo(File video) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final fileName = await _itemRemoteDatasource.uploadImage(video);
+        return Right(fileName);
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return Left(ApiFailure(message: "No internet Connection"));
     }
   }
 }
