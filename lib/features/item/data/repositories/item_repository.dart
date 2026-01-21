@@ -13,10 +13,10 @@ final itemRepositoryProvider = Provider<IItemRepository>((ref) {
 });
 
 class ItemRepository implements IItemRepository {
-  final IItemDataSource _itemDataSource;
+  final IItemLocalDataSource _itemDataSource;
 
-  ItemRepository({required IItemDataSource itemDatasource})
-      : _itemDataSource = itemDatasource;
+  ItemRepository({required IItemLocalDataSource itemDatasource})
+    : _itemDataSource = itemDatasource;
 
   @override
   Future<Either<Failure, bool>> createItem(ItemEntity item) async {
@@ -26,9 +26,7 @@ class ItemRepository implements IItemRepository {
       if (result) {
         return const Right(true);
       }
-      return const Left(
-        LocalDatabaseFailure(message: "Failed to create item"),
-      );
+      return const Left(LocalDatabaseFailure(message: "Failed to create item"));
     } catch (e) {
       return Left(LocalDatabaseFailure(message: e.toString()));
     }
@@ -41,9 +39,7 @@ class ItemRepository implements IItemRepository {
       if (result) {
         return const Right(true);
       }
-      return const Left(
-        LocalDatabaseFailure(message: "Failed to delete item"),
-      );
+      return const Left(LocalDatabaseFailure(message: "Failed to delete item"));
     } catch (e) {
       return Left(LocalDatabaseFailure(message: e.toString()));
     }
@@ -75,7 +71,9 @@ class ItemRepository implements IItemRepository {
   }
 
   @override
-  Future<Either<Failure, List<ItemEntity>>> getItemsByUser(String userId) async {
+  Future<Either<Failure, List<ItemEntity>>> getItemsByUser(
+    String userId,
+  ) async {
     try {
       final models = await _itemDataSource.getItemsByUser(userId);
       final entities = ItemHiveModel.toEntityList(models);
@@ -108,7 +106,9 @@ class ItemRepository implements IItemRepository {
   }
 
   @override
-  Future<Either<Failure, List<ItemEntity>>> getItemsByCategory(String categoryId) async {
+  Future<Either<Failure, List<ItemEntity>>> getItemsByCategory(
+    String categoryId,
+  ) async {
     try {
       final models = await _itemDataSource.getItemsByCategory(categoryId);
       final entities = ItemHiveModel.toEntityList(models);
@@ -126,9 +126,7 @@ class ItemRepository implements IItemRepository {
       if (result) {
         return const Right(true);
       }
-      return const Left(
-        LocalDatabaseFailure(message: "Failed to update item"),
-      );
+      return const Left(LocalDatabaseFailure(message: "Failed to update item"));
     } catch (e) {
       return Left(LocalDatabaseFailure(message: e.toString()));
     }
